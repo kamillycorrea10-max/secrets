@@ -1,0 +1,43 @@
+version: '3.8'
+
+
+services:
+  postgres-db:
+    image: postgres:18-alpine
+    container_name: meu-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data # persistencia de dados 
+    networks:
+      - rede-interna
+  #serviço2:Aplicação web
+  app:
+   build: .
+   container_name: minha-aplicacao-web
+   restart: always
+   ports:
+     - "${APP_PORT}:3000"
+   environment:
+     DB_HOST: postgres-db # usa o NOME do serviço como host de conexão
+     DB_USER: ${POSTGRES_USER}
+     DB_pass: ${POSTGRES_PASSWORD} 
+     DB_NAME: ${POSTGRES_DB}
+   depends_on:
+    - postgres-db # GArante que o banco suba antes da aplicaçao
+   networks:
+    - rede-interna
+
+# DEFINIÇAO DOS VOLUMES
+volumes:
+  pgdata: # volume gerenciado para o banco de dados
+      
+#definiçao das redes
+networks:
+  rede-interna:
+     driver: bridge

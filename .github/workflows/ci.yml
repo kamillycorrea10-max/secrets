@@ -1,0 +1,48 @@
+
+name: Build e publicação da imagem Docker
+
+on:
+  push:
+    branches: ["main", "master", "feature/adiciona-ci-nova"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  testes-e-validacao:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo-fonte
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Executar linter
+        run: npm run linter
+
+      - name: Executar testes automatizados
+        run: npm test
+
+      - name: Verificacao de seguranca
+        run: npm audit --audit-level=high
+
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build da imagem Docker
+        run: docker build -t kamillycorrea/minha-aplicacao:latest -t kamillycorrea/minha-aplicacao:sha-${{ github.sha }} .
+
+      - name: Publicar imagem Docker
+        run: |
+          docker push kamillycorrea/minha-aplicacao:latest
+          docker push kamillycorrea/minha-aplicacao:sha-${{ github.sha }}

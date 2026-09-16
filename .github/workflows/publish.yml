@@ -1,0 +1,45 @@
+on:
+
+push:
+  branches: ["main"]
+ # dispara apenas ao realizar merge ou push na main
+
+jobs:
+   Build-and-push:
+   runs-on: uruntu-latest
+
+
+steps:
+
+#step 1: baixar o codigo-fonte do repositorio
+      -name: baixar codigo
+      uses: actions/checkout@v4
+
+#step 2: configurar o docker buildx(ferramenta avançada para builds)
+-name:autenticar no docker Hub:
+
+ uses:docker/login-action@v3
+with:
+
+  username: ${{secrets.DOCKER_USERNAME}}
+  Password: ${{secrets.DOCKER_PASSWORD}}
+
+#step 4:Extrair metadados para versionamento inteligente(tag semVer e SHA)
+-name: Extrair metadados DO docker
+id: meta
+uses: docker/metadata-action#v5
+with:
+  images: ${{secrets.DOCKER_USERNAME}}/minha-aplicacao
+  tags:
+    type=raw,value=latest
+    type=sha,format=short
+
+# step 5: construir e publicar(Build e push)
+-name: construir e puclicar imagem
+uses: docker/build-push-action@v5
+with:
+  context: .
+  push: true
+  tags: ${{step.meta.outputs.tags}}
+  labels: ${{step.meta.outputs.labels}}
+
